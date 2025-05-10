@@ -4460,18 +4460,45 @@ class TruncatedDistribution(TransformedDistribution):
         logpdf = self._dist._logpdf_dispatch(x, *args, **params)
         return logpdf - logmass
 
+    def _pdf_dispatch(self, x, *args, lb, ub, _a, _b, logmass, **params):
+        pdf = self._dist._pdf_dispatch(x, *args, **params)
+        return pdf * np.exp(-logmass)
+
     def _logcdf_dispatch(self, x, *args, lb, ub, _a, _b, logmass, **params):
         logcdf = self._dist._logcdf2_dispatch(_a, x, *args, **params)
         # of course, if this result is small we could compute with the other tail
         return logcdf - logmass
 
+    def _cdf_dispatch(self, x, *args, lb, ub, _a, _b, logmass, **params):
+        cdf = self._dist._cdf2_dispatch(_a, x, *args, **params)
+        # of course, if this result is small we could compute with the other tail
+        return cdf * np.exp(-logmass)
+
     def _logccdf_dispatch(self, x, *args, lb, ub, _a, _b, logmass, **params):
         logccdf = self._dist._logcdf2_dispatch(x, _b, *args, **params)
         return logccdf - logmass
 
+    def _ccdf_dispatch(self, x, *args, lb, ub, _a, _b, logmass, **params):
+        ccdf = self._dist._cdf2_dispatch(x, _b, *args, **params)
+        return ccdf * np.exp(-logmass)
+
     def _logcdf2_dispatch(self, x, y, *args, lb, ub, _a, _b, logmass, **params):
         logcdf2 = self._dist._logcdf2_dispatch(x, y, *args, **params)
         return logcdf2 - logmass
+
+    def _cdf2_dispatch(self, x, y, *args, lb, ub, _a, _b, logmass, **params):
+        cdf2 = self._dist._cdf2_dispatch(x, y, *args, **params)
+        return cdf2 * np.exp(-logmass)
+
+    def _logccdf2_dispatch(self, x, y, *args, lb, ub, _a, _b, logmass, **params):
+        logcdf_x = self._dist._logcdf2_dispatch(_a, x, *args, **params)
+        logccdf_y = self._dist._logcdf2_dispatch(y, _b, *args, **params)
+        return np.logaddexp(logcdf_x, logccdf_y) - logmass
+
+    def _ccdf2_dispatch(self, x, y, *args, lb, ub, _a, _b, logmass, **params):
+        cdf_x = self._dist._cdf2_dispatch(_a, x, *args, **params)
+        ccdf_y = self._dist._cdf2_dispatch(y, _b, *args, **params)
+        return (cdf_x + ccdf_y) * np.exp(-logmass)
 
     def _ilogcdf_dispatch(self, logp, *args, lb, ub, _a, _b, logmass, **params):
         log_Fa = self._dist._logcdf_dispatch(_a, *args, **params)
