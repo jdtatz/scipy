@@ -19,7 +19,7 @@ from scipy.stats._distr_params import distcont, distdiscrete
 from scipy.stats._distribution_infrastructure import (
     _Domain, _RealInterval, _Parameter, _Parameterization, _RealParameter,
     ContinuousDistribution, ShiftedScaledDistribution, _fiinfo,
-    _generate_domain_support, Mixture)
+    _generate_domain_support, _logexpxmexpy, Mixture)
 from scipy.stats._new_distributions import StandardNormal, _LogUniform, _Gamma
 from scipy.stats._new_distributions import DiscreteDistribution
 from scipy.stats import Normal, Uniform, Binomial
@@ -1459,6 +1459,7 @@ class TestTransforms:
         Y0 = stats.truncnorm(lb, ub)
 
         y = Y0.rvs((3, 10), random_state=rng)
+        y2 = Y0.rvs((3, 10), random_state=rng)
         p = Y0.cdf(y)
 
         assert_allclose(Y.logentropy(), np.log(Y0.entropy() + 0j))
@@ -1480,6 +1481,10 @@ class TestTransforms:
         assert_allclose(Y.logccdf(y), Y0.logsf(y))
         assert_allclose(Y.ilogcdf(np.log(p)), Y0.ppf(p))
         assert_allclose(Y.ilogccdf(np.log(p)), Y0.isf(p))
+        assert_allclose(Y.cdf(y, y2), Y0.cdf(y2) - Y0.cdf(y))
+        assert_allclose(Y.ccdf(y, y2), Y0.sf(y2) + Y0.cdf(y))
+        assert_allclose(Y.logcdf(y, y2), _logexpxmexpy(Y0.logcdf(y2), Y0.logcdf(y)))
+        assert_allclose(Y.logccdf(y, y2), np.logaddexp(Y0.logsf(y2), Y0.logcdf(y)))
         sample = Y.sample(10)
         assert np.all((sample > lb) & (sample < ub))
 
